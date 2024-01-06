@@ -86,20 +86,16 @@ const NotePage = () => {
   };
 
   const handleDeleteClick = () => {
-    setTempState([]);
     const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
-    const updatedTodos = storedTodos.map((todo) => {
-      if (todo.id === parseInt(id)) {
-        return {
-          ...todo,
-          noteList: [],
-        };
-      }
-      return todo;
-    });
+
+    const updatedTodos = storedTodos.filter((todo) => todo.id !== parseInt(id));
+  
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
     setIsChangesSaved(false);
+    navigate("/");
+
   };
+  
 
   const handleSaveClick = () => {
     const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
