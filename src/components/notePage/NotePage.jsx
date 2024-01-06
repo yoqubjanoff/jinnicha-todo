@@ -23,25 +23,36 @@ const NotePage = () => {
     const { todoItem } = evt.target.elements;
   
     if (todoItem.value.trim() !== "") {
-      const newTodo = {
+      let updatedNoteList;
+  
+      const newNote = {
         id: tempState[tempState.length - 1]?.id + 1 || 1,
         title: todoItem.value,
         isCompleted: false,
       };
   
-      setTempState((prevTempState) => [...prevTempState, newTodo]);
-  
-      let updatedNoteList;
       if (selectIndex >= 0) {
         updatedNoteList = [...tempState];
-        updatedNoteList[selectIndex] = newTodo;
+        updatedNoteList[selectIndex] = newNote;
         setSelectIndex(-1);
       } else {
-        updatedNoteList = [...tempState, newTodo];
+        updatedNoteList = [...tempState, newNote];
       }
+  
+      setTempState(updatedNoteList);
+  
       evt.target.reset();
+  
+      const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
+      const selectedTodo = storedTodos.find((todo) => todo.id === parseInt(id));
+  
+      if (selectedTodo) {
+        selectedTodo.noteList = updatedNoteList;
+        localStorage.setItem("todos", JSON.stringify(storedTodos));
+      }
     }
   };
+  
   
 
   const deleteNote = (index) => {
@@ -62,23 +73,7 @@ const NotePage = () => {
     setTempState([...tempState]);
   };
 
-  useEffect(() => {
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
-    const selectedTodo = storedTodos.find((todo) => todo.id === parseInt(id));
-  
-  
-    if (selectedTodo) {
-      setTempState(selectedTodo.noteList);
-  
-      selectedTodo.noteList.push({
-        id: selectedTodo.noteList.length + 1,
-        title: "Yangi malumot",  
-        isCompleted: false,  
-      });
-  
-      localStorage.setItem("todos", JSON.stringify(storedTodos));
-    }
-  }, [id]);
+
   
   return (
     <div>
@@ -149,7 +144,7 @@ const NotePage = () => {
                 onClick={() => navigate("/")}
                 className="btn btn-secondary"
               >
-                Cancel
+                Go to back
               </button>
               {/* <button className='btn btn-success'>Save</button> */}
             </div>

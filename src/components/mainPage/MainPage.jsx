@@ -15,26 +15,30 @@ const MainPage = () => {
 
   const addTodo = (evt) => {
     evt.preventDefault();
-
     const { todoItem } = evt.target.elements;
+    if (todoItem.value.trim() === "") {
+      alert("Please enter a non-empty todo item.");
+      return;
+    }
+  
     const newTodo = {
       id: todoList[todoList.length - 1]?.id + 1 || 1,
       title: todoItem.value,
       noteList: [],
     };
-
+  
     if (selectIndex >= 0) {
       todoList[selectIndex] = newTodo;
       setSelectIndex(-1);
     } else {
       todoList.push(newTodo);
     }
+  
     setTodoList([...todoList]);
     evt.target.reset();
-
     localStorage.setItem("todos", JSON.stringify(todoList));
   };
-
+  
   const deleteTodo = (index) => {
     const updatedTodoList = [...todoList];
     updatedTodoList.splice(index, 1);
