@@ -7,6 +7,7 @@ const NotePage = () => {
   const [selectIndex, setSelectIndex] = useState(-1);
   const [changeTile, setChangeTile] = useState("");
   const [isChangesSaved, setIsChangesSaved] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -19,42 +20,48 @@ const NotePage = () => {
 
   const addNote = async (evt) => {
     evt.preventDefault();
-
+  
     const { todoItem } = evt.target.elements;
-
+  
     if (todoItem.value.trim() !== "") {
-      let updatedNoteList;
-
       const newNote = {
         id: tempState[tempState.length - 1]?.id + 1 || 1,
         title: todoItem.value,
         isCompleted: false,
       };
-
+  
       if (selectIndex >= 0) {
-        updatedNoteList = [...tempState];
+        const updatedNoteList = [...tempState];
         updatedNoteList[selectIndex] = newNote;
         setSelectIndex(-1);
+        setTempState(updatedNoteList);
       } else {
-        updatedNoteList = [...tempState, newNote];
+        setTempState((prevTempState) => [...prevTempState, newNote]);
       }
-
-      setTempState(updatedNoteList);
-
+  
       evt.target.reset();
-
-      const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
-      const selectedTodo = storedTodos.find((todo) => todo.id === parseInt(id));
-
-      if (selectedTodo) {
-        selectedTodo.noteList = updatedNoteList;
-        localStorage.setItem("todos", JSON.stringify(storedTodos));
+  
+      if (!isChangesSaved) {
+        const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
+        const updatedTodos = storedTodos.map((todo) => {
+          if (todo.id === parseInt(id)) {
+            return {
+              ...todo,
+              noteList: tempState,
+            };
+          }
+          return todo;
+        });
+  
+        localStorage.setItem("todos", JSON.stringify(updatedTodos));
+        setIsChangesSaved(true);
+        setIsEditing(false);
       }
     } else {
       alert("Please enter a non-empty todo item.");
     }
-    setIsChangesSaved(false);
   };
+  
 
   const deleteNote = (index) => {
     const updatedNoteList = [...tempState];
@@ -66,15 +73,14 @@ const NotePage = () => {
   const editNote = (index) => {
     setSelectIndex(index);
     setIsChangesSaved(false);
+    setIsEditing(true);
   };
 
   const handleCheckTodo = (evt) => {
     const todoId = evt.target.dataset.todoId;
-    console.log(todoId);
     const findIndexTodo = tempState.findIndex((todo) => todo.id == todoId);
     tempState[findIndexTodo].isCompleted =
       !tempState[findIndexTodo].isCompleted;
-    console.log(!tempState[findIndexTodo].isCompleted);
     setTempState([...tempState]);
     setIsChangesSaved(false);
   };
@@ -96,7 +102,31 @@ const NotePage = () => {
   };
 
   const handleSaveClick = () => {
-    if (!isChangesSaved) {
+    const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
+    const updatedTodos = storedTodos.map((todo) => {
+      if (todo.id === parseInt(id)) {
+        return {
+          ...todo,
+          noteList: tempState,
+        };
+      }
+      return todo;
+    });
+    localStorage.setItem("todos", JSON.stringify(updatedTodos));
+    setIsChangesSaved(true);
+    setIsEditing(false);
+
+    saveChanges();
+    navigate("/");
+  };
+
+  const handleBackClick = () => {
+    saveChanges();
+    navigate("/");
+  };
+
+  const saveChanges = () => {
+    if (!isChangesSaved && isEditing) {
       const storedTodos = JSON.parse(localStorage.getItem("todos")) || [];
       const updatedTodos = storedTodos.map((todo) => {
         if (todo.id === parseInt(id)) {
@@ -109,8 +139,8 @@ const NotePage = () => {
       });
       localStorage.setItem("todos", JSON.stringify(updatedTodos));
       setIsChangesSaved(true);
+      setIsEditing(false);
     }
-    navigate("/")
   };
 
   return (
@@ -178,12 +208,9 @@ const NotePage = () => {
             </div>
             <div className="todo-footer d-flex justify-content-end my-3 gap-3">
               <button className="btn btn-danger" onClick={handleDeleteClick}>
-                Delete
+                Delete all
               </button>
-              <button
-                onClick={() => navigate("/")}
-                className="btn btn-secondary"
-              >
+              <button onClick={handleBackClick} className="btn btn-secondary">
                 Go to back
               </button>
               <button className="btn btn-success" onClick={handleSaveClick}>
